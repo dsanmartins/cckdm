@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension point="org.eclipse.ui.popupMenus">
+      <objectContribution adaptable="true" id="DiscoverConcernsIntoKDM.contribution1" objectClass="org.eclipse.core.resources.IProject">
+         <menu
+               icon="images/1.gif"
+               id="DiscoverConcernsIntoKDM.menu1"
+               label="Discover Concerns KDM"
+               path="additions">
+            <separator name="group1">
+            </separator>
+         </menu>
+         <action
+               class="discoverconcernsintokdm.popup.actions.DiscoverCC"
+               enablesFor="1"
+               icon="images/2.gif"
+               id="DiscoverConcernsKDM.newAction"
+               label="Crosscutting Concerns"
+               menubarPath="DiscoverConcernsIntoKDM.menu1/group1">
+         </action>
+      </objectContribution>
+   </extension>
+
+   <extension point="org.eclipse.gmt.modisco.infra.query.registration">
+      <modelqueryset file="QuerySetKDM.querySet"/>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <category
+            name="Load KDM file"
+            id="DiscoverConcernsKDM.commands.category">
+      </category>
+       <command
+            name="Load KDM file"
+            categoryId="DiscoverConcernsKDM.commands.category"
+            id="DiscoverConcernsKDM.commands.sampleCommand">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.bindings">
+      <key
+            commandId="DiscoverConcernsKDM.commands.sampleCommand"
+            contextId="org.eclipse.ui.contexts.window"
+            sequence="M1+0"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration">
+      </key>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="menu:org.eclipse.ui.main.menu?after=additions">
+         <menu
+               label="CCKDM"
+               mnemonic="L"
+               id="DiscoverConcernsKDM.menus.sampleMenu">
+            <command
+                  commandId="DiscoverConcernsKDM.commands.sampleCommand"
+                  mnemonic="S"
+                  id="DiscoverConcernsKDM.menus.sampleCommand">
+            </command>
+         </menu>
+      </menuContribution>
+      <menuContribution
+            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
+         <toolbar
+               id="DiscoverConcernsKDM.toolbars.sampleToolbar">
+            <command
+                  commandId="DiscoverConcernsKDM.commands.sampleCommand"
+                  icon="images/1.gif"
+                  tooltip="Load KDM file"
+                  id="DiscoverConcernsKDM.toolbars.sampleCommand">
+            </command>
+         </toolbar>
+      </menuContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            commandId="DiscoverConcernsKDM.commands.sampleCommand"  class="discoverConcernsKDM.handlers.SampleHandler">
+      </handler>
+   </extension>
+	
+</plugin>

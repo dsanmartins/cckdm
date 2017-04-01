@@ -1,0 +1,9 @@
+This is a eclipse plug-in for the eclipse june version. The main ideia of this project is discovering concerns into KDM (Knowledge Discovery Metamodel) instances. 
+In order to perform the discovery, the plug-in do two tasks. The firts one checks APIs used by the application by means a concern library. The second one enable a K-means algorithm which calculates the levenshtein distance between strings (strings discovered in the first task with all strings of the system used to name class methods and attributes). After these tasks, the KDM instance is tagged with the concern. 
+
+Main technologies used in this project:
+
+- Java language (Main language)
+- Xquery (BaseX) (xmi and xml query language)
+- Apache Derby (embededd database)
+- Groovy (some operations over xmi and xml files)   

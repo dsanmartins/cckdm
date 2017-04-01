@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="ASCII"?>
+<query:ModelQuerySet xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:query="http://www.eclipse.org/MoDisco/infra/query/0.8.incubation" name="QuerySetKDM" description="My Query Set">
+  <associatedMetamodels href="http://www.eclipse.org/MoDisco/kdm/kdm#/"/>
+  <associatedMetamodels href="http://www.eclipse.org/MoDisco/kdm/code#/"/>
+  <associatedMetamodels href="http://www.eclipse.org/emf/2002/Ecore#/"/>
+  <associatedMetamodels href="http://www.eclipse.org/MoDisco/kdm/action#/"/>
+  <queries xsi:type="query:OCLModelQuery" name="getClassOCL" description="Get Classes" upperBound="10000" query="ClassUnit.allInstances()">
+    <returnType xsi:type="ecore:EClass" href="http://www.eclipse.org/MoDisco/kdm/code#//ClassUnit"/>
+    <scope href="http://www.eclipse.org/MoDisco/kdm/code#//ClassUnit"/>
+    <scope href="http://www.eclipse.org/MoDisco/kdm/core#//ModelElement"/>
+  </queries>
+  <queries xsi:type="query:OCLModelQuery" name="getPropertiesOCL" description="Get Properties" upperBound="10000" query="StorableUnit.allInstances()">
+    <returnType xsi:type="ecore:EClass" href="http://www.eclipse.org/MoDisco/kdm/code#//StorableUnit"/>
+    <scope href="http://www.eclipse.org/MoDisco/kdm/kdm#//KDMModel"/>
+    <scope href="http://www.eclipse.org/MoDisco/kdm/code#//StorableUnit"/>
+  </queries>
+  <queries xsi:type="query:OCLModelQuery" name="getMethodsOCL" description="Get Methods" upperBound="10000" query="MethodUnit.allInstances()">
+    <returnType xsi:type="ecore:EClass" href="http://www.eclipse.org/MoDisco/kdm/code#//MethodUnit"/>
+    <scope href="http://www.eclipse.org/MoDisco/kdm/code#//MethodUnit"/>
+    <scope href="http://www.eclipse.org/MoDisco/kdm/core#//ModelElement"/>
+  </queries>
+  <queries xsi:type="query:OCLModelQuery" name="getCallsOCL" description="Get Calls" upperBound="10000" query="Calls.allInstances()">
+    <returnType xsi:type="ecore:EClass" href="http://www.eclipse.org/MoDisco/kdm/action#//Calls"/>
+    <scope href="http://www.eclipse.org/MoDisco/kdm/action#//BlockUnit"/>
+    <scope href="http://www.eclipse.org/MoDisco/kdm/action#//Calls"/>
+  </queries>
+  <queries xsi:type="query:OCLModelQuery" name="getInterfaceOCL" description="Get Intercaces" upperBound="10000" query="InterfaceUnit.allInstances()">
+    <returnType xsi:type="ecore:EClass" href="http://www.eclipse.org/MoDisco/kdm/code#//InterfaceUnit"/>
+    <scope href="http://www.eclipse.org/MoDisco/kdm/kdm#//KDMModel"/>
+    <scope href="http://www.eclipse.org/MoDisco/kdm/code#//CodeModel"/>
+    <scope href="http://www.eclipse.org/MoDisco/kdm/code#//InterfaceUnit"/>
+  </queries>
+  <queries xsi:type="query:OCLModelQuery" name="getPackagesOCL" description="Get Packages" upperBound="10000" query="Package.allInstances()">
+    <returnType xsi:type="ecore:EClass" href="http://www.eclipse.org/MoDisco/kdm/code#//Package"/>
+    <scope href="http://www.eclipse.org/MoDisco/kdm/kdm#//KDMModel"/>
+    <scope href="http://www.eclipse.org/MoDisco/kdm/code#//Package"/>
+    <scope href="http://www.eclipse.org/MoDisco/kdm/code#//Implements"/>
+    <scope href="http://www.eclipse.org/MoDisco/kdm/code#//CodeElement"/>
+  </queries>
+</query:ModelQuerySet>

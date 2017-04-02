@@ -22,7 +22,7 @@ public interface Annotation {
 	
 	public abstract void methodUnitAnnotation(String concern, ArrayList<String> arrayMethod, boolean internal) throws BaseXException, SQLException, QueryException;
 	
-	public abstract void annotationRemove(ArrayList<String> arrayProperty, ArrayList<String> arrayMethod) throws BaseXException, SQLException, QueryException;
+	public abstract void annotationRemove(ArrayList<String> arrayProperty, ArrayList<String> arrayMethod, String concern) throws BaseXException, SQLException, QueryException;
 	
 	public abstract void javaAnnotation(String projectName,ArrayList<String> concerns, String path) throws BaseXException,  SQLException, QueryException;
 }

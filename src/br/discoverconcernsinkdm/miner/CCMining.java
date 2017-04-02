@@ -66,7 +66,7 @@ public class CCMining implements IMiner
 			concern = concerns.get(i);
 			monitor.subTask("Mining by library, concern: " + concern + ".");
 			List<String> centroids = mineByLibrary(concern, projectName, folder, select, threshold);
-			
+
 			if (!cluster)
 			{
 				monitor.subTask("Mining by cluster, concern: " + concern + ".");
@@ -81,11 +81,11 @@ public class CCMining implements IMiner
 			utilities.saveLogs(log2,projectName,2);
 			utilities.createClusterCSV(projectName);
 		}
-		
+
 		//Java Annotations
 		Annotation kdmAnnotation = new KDMAnnotation(folder + "/" + projectName +"/",   projectName + "_KDM" + ".xmi", "DBKDM");
 		kdmAnnotation.javaAnnotation(projectName,concerns, folder + "/" + projectName +"/");
-		
+
 	}
 
 	public List<String> mineByLibrary(String concern, String projectName, String folder, boolean select, BigDecimal threshold) throws IOException, SQLException, QueryException
@@ -159,7 +159,7 @@ public class CCMining implements IMiner
 			}
 			params.clear();
 			params.add(arrayPackage.get(i) + '%');
-			
+
 			//Method mine
 			try
 			{
@@ -408,73 +408,76 @@ public class CCMining implements IMiner
 		}
 	}
 
-	public void controlledAnnotating(String projectName, String folder,String path) throws IOException, SQLException, QueryException
+	public void controlledAnnotating(String projectName, String folder,String path, ArrayList<String> selected) throws IOException, SQLException, QueryException
 	{
-		File input = new File(path);
-		int lineLength = 0;
-		ArrayList<String> p = new ArrayList<String>();
-		ArrayList<String> m = new ArrayList<String>();
-
-		if (input.exists())
+		for (String select : selected)
 		{
-			CSVReader reader = new CSVReader(new FileReader(path));
-			String [] nextLine;
-			
-			while ((nextLine = reader.readNext()) != null)
-			{
-				lineLength = nextLine.length;
+			File input = new File(path);
+			int lineLength = 0;
+			ArrayList<String> p = new ArrayList<String>();
+			ArrayList<String> m = new ArrayList<String>();
 
-				if (nextLine[lineLength-1].equals("X") || nextLine[lineLength-1].equals("x"))
+			if (input.exists())
+			{
+				CSVReader reader = new CSVReader(new FileReader(path));
+				String [] nextLine;
+
+				while ((nextLine = reader.readNext()) != null)
 				{
-					for (int i=0; i< lineLength; i++)
+					lineLength = nextLine.length;
+
+					if (nextLine[lineLength-1].equals("X") || nextLine[lineLength-1].equals("x"))
 					{
-						if (nextLine[i].split("\\|").length == 4)
+						for (int i=0; i< lineLength; i++)
 						{
-							String[] property = nextLine[i].split("\\|");
-							if (property[2].equals("-"))
+							if (nextLine[i].split("\\|").length == 4)
 							{
-								p.add(property[3] + "|" + property[2] + "|" + property[1]+ "|" + "static");
-								p.add(property[3] + "|" + property[2] + "|" + property[1]+ "|" + "global");
+								String[] property = nextLine[i].split("\\|");
+								System.out.println(property);
+								if (property[2].equals("-"))
+								{
+									p.add(property[3] + "|" + property[2] + "|" + property[1]+ "|" + "static");
+									p.add(property[3] + "|" + property[2] + "|" + property[1]+ "|" + "global");
+								}
+								else
+								{
+									p.add(property[3] + "|" + property[2] + "|" + property[1]+ "|" + "local");
+									p.add(property[3] + "|" + property[2] + "|" + property[1]+ "|" + "static");
+								}	
 							}
 							else
 							{
-								p.add(property[3] + "|" + property[2] + "|" + property[1]+ "|" + "local");
-								p.add(property[3] + "|" + property[2] + "|" + property[1]+ "|" + "static");
+								if (nextLine[i].split("\\|").length == 3)
+								{
+									String[] method = nextLine[i].split("\\|");
+									m.add(method[2] + "|" + method[1]); 
+								}
 							}	
 						}
-						else
-						{
-							if (nextLine[i].split("\\|").length == 3)
-							{
-								String[] method = nextLine[i].split("\\|");
-								m.add(method[2] + "|" + method[1]); 
-							}
-						}	
 					}
 				}
+
+				HashSet<String> hs = new HashSet<String>();
+
+				hs.addAll(p);
+				p.clear();
+				p.addAll(hs);
+				hs.clear();
+
+				hs.addAll(m);
+				m.clear();
+				m.addAll(hs);
+				hs.clear();
+
+				//Annotation
+				Annotation kdmAnnotation = new KDMAnnotation(folder + "/" + projectName +"/",  projectName + "_KDM" + ".xmi","DBKDM");
+				kdmAnnotation.annotationRemove(p, m, select);
+
+				p.clear();
+				m.clear();
+				reader.close();
 			}
-
-			HashSet<String> hs = new HashSet<String>();
-
-			hs.addAll(p);
-			p.clear();
-			p.addAll(hs);
-			hs.clear();
-
-			hs.addAll(m);
-			m.clear();
-			m.addAll(hs);
-			hs.clear();
-
-
-			//Annotation
-			Annotation kdmAnnotation = new KDMAnnotation(folder + "/" + projectName +"/",  projectName + "_KDM" + ".xmi","DBKDM");
-			kdmAnnotation.annotationRemove(p, m);
-
-			p.clear();
-			m.clear();
-			reader.close();
 		}
 	}
-	
+
 }

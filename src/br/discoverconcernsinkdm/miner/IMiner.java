@@ -18,6 +18,6 @@ public interface IMiner {
 	public void mineByCluster(String a, String b, BigDecimal c, 
 							  boolean d, String e, List<String> f) throws IOException, SQLException, QueryException;
 	
-	public void controlledAnnotating(String projectName, String folder,String path) throws IOException, SQLException, QueryException;
+	public void controlledAnnotating(String projectName, String folder,String path, ArrayList<String> selected) throws IOException, SQLException, QueryException;
 	
 }

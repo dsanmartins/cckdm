@@ -362,32 +362,37 @@ public class Window extends Composite {
 		btnNewButton_4.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				
+
 				final IMiner ccMining = new CCMining();
-				try 
+				if (selected.size() > 0)
 				{
-					ccMining.controlledAnnotating(projectName, folder, pathControll);
-					MessageDialog.openInformation(shell,"CCKDM", "The KDM XMI file has been updated.");
-					
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} catch (QueryException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+					try 
+					{
+						ccMining.controlledAnnotating(projectName, folder, pathControll,selected);
+						MessageDialog.openInformation(shell,"CCKDM", "The KDM XMI file has been updated.");
+
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (SQLException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (QueryException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 				}
-				
-				
+				else
+				{
+					MessageDialog.openInformation(shell,"CCKDM", "You must choose at least one concern to delete");
+				}
 			}
 		});
 		btnNewButton_4.setFont(SWTResourceManager.getFont("Sans", 7, SWT.NORMAL));
 		btnNewButton_4.setBounds(47, 149, 78, 18);
 		btnNewButton_4.setText("Control");
 		btnNewButton_4.setEnabled(false);
-		
+
 		btnCheckButton_1.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -415,8 +420,8 @@ public class Window extends Composite {
 		});
 		btnCheckButton_1.setBounds(47, 107, 161, 21);
 		btnCheckButton_1.setText("Controlled Annotation");
-		
-		
+
+
 
 		valueText = new BigDecimal(text_10.getText());
 

@@ -30,7 +30,6 @@ import org.basex.core.cmd.Open;
 import org.basex.query.QueryException;
 import org.basex.query.QueryProcessor;
 import org.basex.query.iter.Iter;
-import org.basex.query.value.Value;
 import org.basex.query.value.item.Item;
 
 import br.discoverconcernsinkdm.persistenceManager.Query;
@@ -311,10 +310,9 @@ public class KDMAnnotation implements Annotation  {
 		}
 	}
 
-	public void annotationRemove(ArrayList<String> arrayProperty, ArrayList<String> arrayMethod) throws BaseXException, SQLException, QueryException
+	public void annotationRemove(ArrayList<String> arrayProperty, ArrayList<String> arrayMethod, String concern) throws BaseXException, SQLException, QueryException
 	{
 		this.openDB();
-
 		for (int i=0; i<arrayProperty.size(); i++)
 		{
 			String [] var = arrayProperty.get(i).split("\\|");
@@ -332,7 +330,16 @@ public class KDMAnnotation implements Annotation  {
 					QueryProcessor proc = new QueryProcessor(query, context);
 					proc.bind("class", module);
 					proc.bind("property", property);
+					proc.bind("concern", concern);
 					proc.bind("kind", kind);
+					
+					log.info("STATIC-IN-CLASS");
+					log.info("Concern name: " + concern);
+					log.info("Module name: " + module);
+					log.info("Method name: " + method);
+					log.info("Property name: " + property);
+					log.info("Type of Artifact: "  + kind);
+					log.info("---------------------------------------------------");
 
 					// Execute the query
 					proc.execute();
@@ -346,7 +353,16 @@ public class KDMAnnotation implements Annotation  {
 						QueryProcessor proc = new QueryProcessor(query, context);
 						proc.bind("class", module);
 						proc.bind("property", property);
+						proc.bind("concern", concern);
 
+						log.info("GLOBAL-IN-CLASS");
+						log.info("Concern name: " + concern);
+						log.info("Module name: " + module);
+						log.info("Method name: " + method);
+						log.info("Property name: " + property);
+						log.info("Type of Artifact: "  + kind);
+						log.info("---------------------------------------------------");
+						
 						// Execute the query
 						proc.execute();
 						proc.close();
@@ -363,7 +379,16 @@ public class KDMAnnotation implements Annotation  {
 					proc.bind("method", method);
 					proc.bind("property", property);
 					proc.bind("kind", kind);
+					proc.bind("concern", concern);
 
+					log.info("LOCAL-OR-STATIC-IN-METHOD");
+					log.info("Concern name: " + concern);
+					log.info("Module name: " + module);
+					log.info("Method name: " + method);
+					log.info("Property name: " + property);
+					log.info("Type of Artifact: "  + kind);
+					log.info("---------------------------------------------------");
+					
 					// Execute the query
 					proc.execute();
 					proc.close();
@@ -382,6 +407,13 @@ public class KDMAnnotation implements Annotation  {
 			QueryProcessor proc = new QueryProcessor(query, context);
 			proc.bind("class", module);
 			proc.bind("method", method);
+			proc.bind("concern", concern);
+			
+			log.info("METHOD");
+			log.info("Concern name: " + concern);
+			log.info("Module name: " + module);
+			log.info("Method name: " + method);
+			log.info("---------------------------------------------------");
 
 			// Execute the query
 			proc.execute();

@@ -39,11 +39,4 @@
 		<nature>org.eclipse.jdt.groovy.core.groovyNature</nature>
 		<nature>org.apache.derby.ui.derbyEngine</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>lib-org.jboss.tools.xulrunner.initializer_3.4.0.Final-v20130327-1516-B116</name>
-			<type>2</type>
-			<location>/home/dsanmartins/eclipse-juno/plugins/org.jboss.tools.xulrunner.initializer_3.4.0.Final-v20130327-1516-B116</location>
-		</link>
-	</linkedResources>
 </projectDescription>

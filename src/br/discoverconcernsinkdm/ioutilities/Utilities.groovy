@@ -224,7 +224,7 @@ class Utilities implements IUtilities
 					}
 					catch(StringIndexOutOfBoundsException e)
 					{
-						e.printStackTrace();
+						println value.length();
 					}
 					collections.add(value);
 				}

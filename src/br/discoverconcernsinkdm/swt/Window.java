@@ -135,14 +135,7 @@ public class Window extends Composite {
 				{
 					int totalUnitsOfWork = IProgressMonitor.UNKNOWN;
 					monitor.beginTask("Loading project...wait.",totalUnitsOfWork); 
-					Resource javaResource = initialSetup(projectName, monitor);
-					monitor.setTaskName("Generating KDM file....wait.");
-					try {
-						generateKDMFile(javaResource);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					initialSetup(projectName, monitor);
 					monitor.done(); 
 				}
 			});
@@ -994,12 +987,13 @@ public class Window extends Composite {
 		// Disable the check that prevents subclassing of SWT components
 	}
 
-	public Resource initialSetup(String projectName, IProgressMonitor monitor)
+	public void initialSetup(String projectName, IProgressMonitor monitor)
 	{
 		EList <KDMModel>  listKdmModel = null;
 		KDMModel kdmModel = null;
 		Resource javaResource = null;
-
+		String folder = null;
+		
 		try
 		{
 			//Create DataBase Model
@@ -1012,7 +1006,7 @@ public class Window extends Composite {
 			IJavaProject javaProject = JavaCore.create(project);
 
 			//If file exist
-			String folder= workspace.getRoot().getLocation().toFile().getPath().toString(); 
+			folder= workspace.getRoot().getLocation().toFile().getPath().toString(); 
 			File file = new File(folder + "/" + this.projectName +"/" + projectName + "_KDM" + ".xmi");
 
 			//Convert KDM
@@ -1033,6 +1027,9 @@ public class Window extends Composite {
 				resource.load(null);
 				javaResource = resource;
 			}
+			
+			monitor.subTask("Generating KDM file....wait.");
+			this.generateKDMFile(javaResource);
 
 			//Get KDM Segment
 			Segment kdmSegment =  (Segment) javaResource.getContents().get(0);
@@ -1042,29 +1039,25 @@ public class Window extends Composite {
 			//Get Models
 			kdmModel = listKdmModel.get(0);
 
-			monitor.subTask("Loading packages.");
-			setup.getModelPackages(kdmModel, this.projectName, rtn);
-			monitor.subTask("Loading classes.");
-			setup.getModelClasses(kdmModel, this.projectName, rtn);
+			monitor.subTask("Loading classes, imports and packages");
+			setup.getModelClasses(kdmModel, folder, this.projectName, rtn);
 			monitor.subTask("Loading interfaces.");
-			setup.getModelInterfaces(kdmModel, this.projectName, rtn);
+			setup.getModelInterfaces(kdmModel, folder, this.projectName, rtn);
 			monitor.subTask("Loading methods.");
-			BlockUnit blockUnit = setup.getModelMethods(kdmModel, this.projectName, rtn);
+			BlockUnit blockUnit = setup.getModelMethods(kdmModel, folder, this.projectName, rtn);
 			monitor.subTask("Loading methods fan-in.");
-			setup.getCalls(kdmModel, this.projectName, rtn,blockUnit);
+			setup.getCalls(kdmModel, folder, this.projectName, rtn,blockUnit);
 			monitor.subTask("Loading properties.");
-			setup.getModelProperties(kdmModel, this.projectName, rtn);
+			setup.getModelProperties(kdmModel, folder, this.projectName, rtn);
 
 		}
 		catch (Exception e)
 		{
 			System.out.println(e.getMessage());
 		}
-
-		return javaResource;
 	}
 
-	public void generateKDMFile(Resource javaResource) throws IOException
+	private void generateKDMFile(Resource javaResource) throws IOException
 	{
 		//Saving KDM instance
 		String folder= workspace.getRoot().getLocation().toFile().getPath().toString(); 

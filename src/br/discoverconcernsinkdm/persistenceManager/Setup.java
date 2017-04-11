@@ -62,7 +62,6 @@ public class Setup {
 				ConnectionDB.getInstance(projectName).executeDDL(Query.getQuery("createPackage"));
 				ConnectionDB.getInstance(projectName).executeDDL(Query.getQuery("createModule"));
 				ConnectionDB.getInstance(projectName).executeDDL(Query.getQuery("createModuleToPackage"));
-				ConnectionDB.getInstance(projectName).executeDDL(Query.getQuery("createModuleToModule"));
 				ConnectionDB.getInstance(projectName).executeDDL(Query.getQuery("createMethod"));
 				ConnectionDB.getInstance(projectName).executeDDL(Query.getQuery("createPropertyLocal"));
 				ConnectionDB.getInstance(projectName).executeDDL(Query.getQuery("createPropertyGlobal"));
@@ -89,27 +88,9 @@ public class Setup {
 		ConnectionDB.getInstance(projectName).close();
 	}
 
-
-	public void getModelPackages(KDMModel kdmModel, String projectName, int rtn)
+	public void getModelClasses(KDMModel kdmModel, String folder, String projectName, int rtn)
 	{
-		IQueries modelElements = new ModelElementsByOCL(kdmModel, projectName);
-
-		if (rtn == 0)
-		{
-			try
-			{
-				modelElements.setModelPackages();
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-			}
-		}
-	}
-
-	public void getModelClasses(KDMModel kdmModel, String projectName, int rtn)
-	{
-		IQueries modelElements = new ModelElementsByOCL(kdmModel, projectName);
+		IQueries modelElements = new ModelElementsByOCL(kdmModel, folder, projectName);
 
 		if (rtn == 0)
 		{
@@ -124,9 +105,9 @@ public class Setup {
 		}
 	}
 
-	public void getModelInterfaces(KDMModel kdmModel, String projectName, int rtn)
+	public void getModelInterfaces(KDMModel kdmModel, String folder, String projectName, int rtn)
 	{
-		IQueries modelElements = new ModelElementsByOCL(kdmModel, projectName);
+		IQueries modelElements = new ModelElementsByOCL(kdmModel, folder, projectName);
 
 		if (rtn == 0)
 		{
@@ -141,9 +122,9 @@ public class Setup {
 		}
 	}
 
-	public BlockUnit getModelMethods(KDMModel kdmModel, String projectName, int rtn)
+	public BlockUnit getModelMethods(KDMModel kdmModel, String folder, String projectName, int rtn)
 	{
-		IQueries modelElements = new ModelElementsByOCL(kdmModel, projectName);
+		IQueries modelElements = new ModelElementsByOCL(kdmModel, folder, projectName);
 		BlockUnit blockUnit = null;
 
 		if (rtn == 0)
@@ -160,9 +141,9 @@ public class Setup {
 		return blockUnit;
 	}
 	
-	public void getCalls(KDMModel kdmModel, String projectName, int rtn, BlockUnit blockUnit)
+	public void getCalls(KDMModel kdmModel, String folder, String projectName, int rtn, BlockUnit blockUnit)
 	{
-		IQueries modelElements = new ModelElementsByOCL(kdmModel, projectName);
+		IQueries modelElements = new ModelElementsByOCL(kdmModel, folder, projectName);
 
 		if (rtn == 0)
 		{
@@ -177,9 +158,9 @@ public class Setup {
 		}
 	}
 
-	public void getModelProperties(KDMModel kdmModel, String projectName, int rtn)
+	public void getModelProperties(KDMModel kdmModel, String folder, String projectName, int rtn)
 	{
-		IQueries modelElements = new ModelElementsByOCL(kdmModel, projectName);
+		IQueries modelElements = new ModelElementsByOCL(kdmModel, folder, projectName);
 
 		if (rtn == 0)
 		{

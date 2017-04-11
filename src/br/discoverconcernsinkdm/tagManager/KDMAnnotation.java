@@ -123,8 +123,7 @@ public class KDMAnnotation implements Annotation  {
 			String method = var[1];
 			String property = var[2];
 			String kind = var[3];
-
-
+			
 			if (method.equals("-"))
 			{
 				if (kind.equals("static"))

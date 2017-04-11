@@ -20,10 +20,18 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
 
+import org.basex.core.BaseXException;
+import org.basex.core.Context;
+import org.basex.query.QueryException;
+import org.basex.query.QueryProcessor;
+import org.basex.query.iter.Iter;
+import org.basex.query.value.item.Item;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.gmt.modisco.infra.query.ModelQuery;
@@ -34,105 +42,99 @@ import org.eclipse.gmt.modisco.infra.query.runtime.ModelQueryResult;
 import org.eclipse.gmt.modisco.omg.kdm.action.BlockUnit;
 import org.eclipse.gmt.modisco.omg.kdm.action.Calls;
 import org.eclipse.gmt.modisco.omg.kdm.code.AbstractCodeElement;
-import org.eclipse.gmt.modisco.omg.kdm.code.AbstractCodeRelationship;
 import org.eclipse.gmt.modisco.omg.kdm.code.ClassUnit;
 import org.eclipse.gmt.modisco.omg.kdm.code.CodeModel;
-import org.eclipse.gmt.modisco.omg.kdm.code.Imports;
 import org.eclipse.gmt.modisco.omg.kdm.code.InterfaceUnit;
 import org.eclipse.gmt.modisco.omg.kdm.code.MethodUnit;
+import org.eclipse.gmt.modisco.omg.kdm.code.Package;
 import org.eclipse.gmt.modisco.omg.kdm.code.ParameterUnit;
 import org.eclipse.gmt.modisco.omg.kdm.code.Signature;
 import org.eclipse.gmt.modisco.omg.kdm.code.StorableUnit;
-import org.eclipse.gmt.modisco.omg.kdm.code.impl.PackageImpl;
-import org.eclipse.gmt.modisco.omg.kdm.code.Package;
 import org.eclipse.gmt.modisco.omg.kdm.kdm.KDMModel;
 
 import br.discoverconcernsinkdm.persistenceManager.ConnectionDB;
 import br.discoverconcernsinkdm.persistenceManager.Query;
-import br.discoverconcernsinkdm.queryManager.IQueries;
 
 public class ModelElementsByOCL implements IQueries {
 
 	KDMModel context;
 
 	List<String> paramsPackage = new ArrayList<String>();
-	List<String> paramsImports = new ArrayList<String>();
 	List<String> paramsModule = new ArrayList<String>();
+	List<String> paramsPackageModule = new ArrayList<String>();
+	List<String> paramsImports = new ArrayList<String>();
 	List<String> paramsMethod = new ArrayList<String>();
 	List<String> paramsProperty = new ArrayList<String>();
 	List<String> paramsImp = new ArrayList<String>();
 	String projectName = null;
+	String folder = null;
 
-
-	public ModelElementsByOCL(KDMModel k, String projectName)
+	public ModelElementsByOCL(KDMModel k, String folder, String projectName)
 	{
 		this.projectName = projectName;
 		context = k;
+		this.folder = folder;
 	}
 
-
-	/* (non-Javadoc)
-	 * @see br.discoverconcernsinkdm.queries.Queries#setModelPackages()
-	 */
 	@Override
-	public void setModelPackages() throws Exception
+	public void setModelClasses() throws Exception 
 	{
-		// Get the model query set catalog.
-		ModelQuerySetCatalog catalog = ModelQuerySetCatalog.getSingleton(); 
-
-		// Get the query set named "My".
-		ModelQuerySet modelQuerySet = catalog.getModelQuerySet("QuerySetKDM");
-
-		// Select in the "My" query set a query named "myQuery".
-		// modelQueryDescription is a model element.
-		ModelQuery modelQueryDescription = null;
-		for (ModelQuery modelQuery : modelQuerySet.getQueries())
+		IXQueryEngine iQuery = new XQueryEngine(folder + "/" + projectName +"/",   projectName + "_KDM" + ".xmi", "DBKDM");
+		iQuery.openDB();
+		String query = Query.getQuery("getPathClasses");
+		QueryProcessor proc = new QueryProcessor(query, iQuery.getContext());
+		Iter iter = proc.iter();
+		String rtn = ""; 
+		ArrayList<String> classList = new ArrayList<String>();
+		for(Item item; (item = iter.next()) != null;) 
 		{
-			if (modelQuery.getName().equals("getPackagesOCL")) 
-			{
-				modelQueryDescription = modelQuery;
-				break;
-			}
+			rtn = item.toJava().toString();
+			rtn = rtn.split("model")[1].replaceAll("Q\\{\\}", "");
+			rtn = "//model"+rtn;
+			classList.add(rtn);
 		}
-		if (modelQueryDescription == null) 
+		proc.close();
+
+		query = Query.getQuery("dynamicQuery");
+		for (String r : classList)
 		{
-			throw new Exception();
+			query = query + " let $a:= " + r + " return data($a/@name) ";
+			proc = new QueryProcessor(query, iQuery.getContext());
+			iter = proc.iter();
+			rtn = ""; 
+			for(Item item; (item = iter.next()) != null;)
+				rtn = item.toJava().toString();
+		
+			//Package of a class
+			String packageName = this.getPackageName(r,iQuery.getContext());
+			paramsPackage.add(packageName +"|");
+			Set<String> set1 = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+			set1.addAll(paramsPackage);
+			paramsPackage = new ArrayList<String>(set1);
+	
+			//Class
+			paramsModule.add(rtn + "|" + "Class");
+			Set<String> set2 = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+			set2.addAll(paramsModule);
+			paramsModule = new ArrayList<String>(set2);
+			
+			//Package and Module
+			paramsPackageModule.add(packageName + "|" + rtn);
+			Set<String> set3 = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+			set3.addAll(paramsPackageModule);
+			paramsPackageModule = new ArrayList<String>(set3);
+			
+			query = "";
+			proc.close();
+			
+			//Imports of a class
+			setImportClass(rtn, iQuery.getContext());
 		}
+		iQuery.closeDB();
+		iQuery.dropDB();
+		iQuery.getContext().close();
 
-		//Get a java instance of the querySet
-		AbstractModelQuery myModelQuery = catalog.getModelQueryImpl(modelQueryDescription);
-
-
-		//the model query set evaluation
-		ModelQueryResult result = myModelQuery.evaluate(context);
-		if (result.getException() != null)
-		{
-			throw new Exception();
-		}
-
-		@SuppressWarnings("unchecked")
-		Iterator<Package> it = ((HashSet <Package>) result.getValue()).iterator();
-
-
-		ArrayList<String> temp = new ArrayList<String>();
-
-		while (it.hasNext())
-		{
-			Package pkg = (Package) it.next();
-			temp.add(pkg.getName());
-		}
-
-		HashSet<String> hs = new HashSet<String>();
-		hs.addAll(temp);
-		temp.clear();
-		temp.addAll(hs);
-
-		for (int i=0; i< temp.size(); i++)
-		{
-			paramsPackage.add(temp.get(i) +"|");
-		}
-
-
+		//Insert Packages
 		try
 		{
 			ConnectionDB.getInstance(projectName).addBatch(Query.getQuery("insertPackage"), paramsPackage);
@@ -142,82 +144,7 @@ public class ModelElementsByOCL implements IQueries {
 			e.printStackTrace();
 		}
 		paramsPackage.clear();
-
-	}
-
-	/* (non-Javadoc)
-	 * @see br.discoverconcernsinkdm.queries.Queries#setModelClasses()
-	 */
-	@Override
-	public void setModelClasses() throws Exception 
-	{
-
-		// Get the model query set catalog.
-		ModelQuerySetCatalog catalog = ModelQuerySetCatalog.getSingleton(); 
-
-		// Get the query set named "My".
-		ModelQuerySet modelQuerySet = catalog.getModelQuerySet("QuerySetKDM");
-
-		// Select in the "My" query set a query named "myQuery".
-		// modelQueryDescription is a model element.
-		ModelQuery modelQueryDescription = null;
-		for (ModelQuery modelQuery : modelQuerySet.getQueries())
-		{
-			if (modelQuery.getName().equals("getClassOCL")) 
-			{
-				modelQueryDescription = modelQuery;
-				break;
-			}
-		}
-		if (modelQueryDescription == null) 
-		{
-			throw new Exception();
-		}
-
-		//Get a java instance of the querySet
-		AbstractModelQuery myModelQuery = catalog.getModelQueryImpl(modelQueryDescription);
-
-
-		//the model query set evaluation
-		ModelQueryResult result = myModelQuery.evaluate(context);
-		if (result.getException() != null)
-		{
-			throw new Exception();
-		}
-
-		@SuppressWarnings("unchecked")
-		Iterator<ClassUnit> it = ((HashSet <ClassUnit>) result.getValue()).iterator();
-
-		ArrayList<String> temp = new ArrayList<String>();
-
-		while (it.hasNext())
-		{
-			ClassUnit classe = (ClassUnit) it.next();
-			if (classe.getAttribute().size() > 0 && !classe.getName().equals("Anonymous type"))
-			{	
-				if (classe.getAttribute().get(0).getTag().equals("export"))
-				{
-					int index = temp.indexOf(classe.getName());
-
-					if (index == -1)
-					{
-						paramsModule.add(classe.getName() + "|" + "Class");
-						//Insert Class Imports
-						setImportClass(classe, null);
-
-						//Insert Class - Package
-						if (classe.eContainer() instanceof Package)
-							paramsPackage.add(getContainer(classe.eContainer()) + "|" + classe.getName());
-						else
-							//Nested Class
-							if (classe.eContainer() instanceof ClassUnit)
-								paramsImp.add(getContainer(classe.eContainer()) + "|" + classe.getName());
-						temp.add(classe.getName());
-					}
-				}
-			}
-		}
-
+		
 		//Insert Modules
 		try
 		{
@@ -232,113 +159,108 @@ public class ModelElementsByOCL implements IQueries {
 		//Insert Module - Package
 		try
 		{
-			ConnectionDB.getInstance(projectName).addBatch(Query.getQuery("insertPackageModule"), paramsPackage);
+			ConnectionDB.getInstance(projectName).addBatch(Query.getQuery("insertPackageModule"), paramsPackageModule);
 		}
 		catch (SQLException e)
 		{
 			e.printStackTrace();
 		}
-		paramsPackage.clear();
+		paramsPackageModule.clear();
 
-		//Insert nested Classes
+	}
+
+	private void setImportClass(String classe, Context context) throws IOException, SQLException, QueryException
+	{
+		String query = Query.getQuery("getImportsPath");
+		QueryProcessor proc = new QueryProcessor(query, context);
+		proc.bind("class", classe);
+		Iter iter = proc.iter();
+		String rtn = ""; 
+		ArrayList<String> importList = new ArrayList<String>();
+		for(Item item; (item = iter.next()) != null;) 
+		{
+			rtn = item.toJava().toString();
+			rtn = rtn.replace("/0/", "//");
+			rtn = "\"" + rtn + "\"" ;
+			importList.add(getTransformationPath(rtn));
+		}
+		proc.close();
+		for (String path: importList)
+		{
+			query = Query.getQuery("getImportsName");
+			query = query + " " + path +"/data(@name)";
+			proc = new QueryProcessor(query, context);
+			iter = proc.iter();
+			rtn = ""; 
+			for(Item item; (item = iter.next()) != null;)
+			{
+				rtn = item.toJava().toString();
+				paramsImports.add(classe + "|" + rtn);
+			}
+			proc.close();
+
+		}	
+		//Insert Imports Class
 		try
 		{
-			ConnectionDB.getInstance(projectName).addBatch(Query.getQuery("insertModuleModule"), paramsImp);
+			ConnectionDB.getInstance(projectName).addBatch(Query.getQuery("insertImports"), paramsImports);
 		}
 		catch (SQLException e)
 		{
 			e.printStackTrace();
 		}
-		paramsImp.clear();
-
+		paramsImports.clear();
 	}
 
-
-	private void setImportClass(ClassUnit classe, InterfaceUnit interfaceUnit) throws IOException
+	private void setImportInterface(InterfaceUnit interfaceUnit) throws IOException, SQLException, QueryException
 	{
-		Imports imports = null;
-		EObject packages = null;
-		String namePackage = "";
-
-
-		if (interfaceUnit == null)
+		IXQueryEngine iQuery = new XQueryEngine(folder + "/" + projectName +"/",   projectName + "_KDM" + ".xmi", "DBKDM");
+		iQuery.openDB();
+		String query = Query.getQuery("getImportsPath");
+		QueryProcessor proc = new QueryProcessor(query, iQuery.getContext());
+		proc.bind("class", interfaceUnit.getName());
+		Iter iter = proc.iter();
+		String rtn = ""; 
+		ArrayList<String> importList = new ArrayList<String>();
+		for(Item item; (item = iter.next()) != null;) 
 		{
-			EList<AbstractCodeRelationship> elements = classe.getCodeRelation();
-
-			for (int i=0; i< elements.size(); i++)
-			{
-				if (elements.get(i) instanceof Imports)
-				{
-					imports = (Imports) elements.get(i);
-					packages = imports.getTo().eContainer();
-					while (packages instanceof PackageImpl)
-					{
-						namePackage =  ((PackageImpl) packages).getName() + "." + namePackage;
-						packages = packages.eContainer();
-					}
-					namePackage = namePackage + imports.getTo().getName();
-
-					if (namePackage.startsWith("java") || namePackage.startsWith("javax"))
-						paramsImports.add(classe.getName() + "|" + namePackage);
-
-					namePackage = "";
-				}
-			}
-			//Insert Imports Class
-			try
-			{
-				ConnectionDB.getInstance(projectName).addBatch(Query.getQuery("insertImports"), paramsImports);
-			}
-			catch (SQLException e)
-			{
-				e.printStackTrace();
-			}
-			paramsImports.clear();
+			rtn = item.toJava().toString();
+			rtn = rtn.replace("/0/", "//");
+			rtn = "\"" + rtn + "\"" ;
+			importList.add(getTransformationPath(rtn));
 		}
-		else
+		proc.close();
+		for (String path: importList)
 		{
-			if (classe == null)
+			query = Query.getQuery("getImportsName");
+			query = query + " " + path +"/data(@name)";
+			proc = new QueryProcessor(query, iQuery.getContext());
+			iter = proc.iter();
+			rtn = ""; 
+			for(Item item; (item = iter.next()) != null;)
 			{
-				EList<AbstractCodeRelationship> elements = interfaceUnit.getCodeRelation();
-
-				for (int i=0; i< elements.size(); i++)
-				{
-					if (elements.get(i) instanceof Imports)
-					{
-						imports = (Imports) elements.get(i);
-						packages = imports.getTo().eContainer();
-						while (packages instanceof PackageImpl)
-						{
-							namePackage =  ((PackageImpl) packages).getName() + "." + namePackage;
-							packages = packages.eContainer();
-						}
-						namePackage = namePackage + imports.getTo().getName();
-
-						if (namePackage.startsWith("java") || namePackage.startsWith("javax"))
-							paramsImports.add(interfaceUnit.getName() + "|" + namePackage);
-
-						namePackage = "";
-					}
-				}
-
-				//Inserts Interface - Imports
-				try
-				{
-					ConnectionDB.getInstance(projectName).addBatch(Query.getQuery("insertImports"), paramsImports);
-				}
-				catch (SQLException e)
-				{
-					e.printStackTrace();
-				}
-				paramsImports.clear();
-
+				rtn = item.toJava().toString();
+				paramsImports.add(interfaceUnit.getName() + "|" + rtn);
 			}
+			proc.close();
+
+		}	
+		iQuery.closeDB();
+		iQuery.dropDB();
+		iQuery.getContext().close();
+
+		//Insert Imports Class
+		try
+		{
+			ConnectionDB.getInstance(projectName).addBatch(Query.getQuery("insertImports"), paramsImports);
 		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		paramsImports.clear();
 	}
 
-	/* (non-Javadoc)
-	 * @see br.discoverconcernsinkdm.queries.Queries#setModelInterfaces()
-	 */
 	@Override
 	public void setModelInterfaces() throws Exception 
 	{
@@ -392,7 +314,7 @@ public class ModelElementsByOCL implements IQueries {
 					paramsModule.add(interfaceUnit.getName() + "|" + "Interface");
 
 					//Insert Class Imports
-					setImportClass(null,interfaceUnit);
+					setImportInterface(interfaceUnit);
 
 					if (interfaceUnit.eContainer() instanceof Package)
 						//Insert Class - Package
@@ -427,22 +349,8 @@ public class ModelElementsByOCL implements IQueries {
 			e.printStackTrace();
 		}
 		paramsPackage.clear();
-
-		try
-		{
-			ConnectionDB.getInstance(projectName).addBatch(Query.getQuery("insertModuleModule"), paramsImp);
-		}
-		catch (SQLException e)
-		{
-			e.printStackTrace();
-		}
-		paramsImp.clear();
-
 	}
 
-	/* (non-Javadoc)
-	 * @see br.discoverconcernsinkdm.queries.Queries#setModelMethods()
-	 */
 	@Override
 	public BlockUnit setModelMethods() throws Exception 
 	{
@@ -560,9 +468,6 @@ public class ModelElementsByOCL implements IQueries {
 		return blockUnit;
 	}
 
-	/* (non-Javadoc)
-	 * @see br.discoverconcernsinkdm.queries.Queries#setCalls(org.eclipse.gmt.modisco.omg.kdm.action.BlockUnit)
-	 */
 	@Override
 	public void setCalls(BlockUnit blockUnit) throws Exception 
 	{
@@ -726,10 +631,6 @@ public class ModelElementsByOCL implements IQueries {
 		paramsMethod.clear();
 	}
 
-
-	/* (non-Javadoc)
-	 * @see br.discoverconcernsinkdm.queries.Queries#setModelProperties()
-	 */
 	@Override
 	public void setModelProperties() throws Exception 
 	{
@@ -874,7 +775,6 @@ public class ModelElementsByOCL implements IQueries {
 		}
 	}
 
-
 	private MethodUnit getContainerMethodUnit(EObject object)
 	{
 		if (!(object instanceof MethodUnit))
@@ -916,5 +816,57 @@ public class ModelElementsByOCL implements IQueries {
 				}
 			}
 		}
+	}
+
+	public String getTransformationPath(String str) throws SQLException, QueryException
+	{
+		String newStr ="";
+		str = str.replaceAll("@", "");
+		str = str.substring(3, str.length()-1);
+
+		String line[] = str.split("\\/");
+		for (int i = 0; i<line.length; i++)
+		{
+			String subline[] = line[i].split("\\.");
+			newStr = newStr + subline[0]+"["+(Integer.parseInt(subline[1]) + 1) +"]/";
+		}
+		str = "//"+newStr.substring(0, newStr.length()-1);
+		return str;
+	}
+
+	public String getPackageName(String token , Context context) throws SQLException, QueryException, BaseXException
+	{
+		token = token.substring(2);
+		String tokens[] = token.split("\\/");
+		String path = "//" + tokens[0];
+		String pkgName = "";
+		for (int i = 1 ; i<tokens.length; i++)
+		{
+			String query1 = Query.getQuery("dynamicQuery");
+			path = path + "/" + tokens[i];
+			query1 = query1 + " let $a:= " + path + " return data($a/@xsi:type) ";
+			QueryProcessor proc = new QueryProcessor(query1, context);
+			Iter iter = proc.iter();
+			String rtn = ""; 
+			for(Item item; (item = iter.next()) != null;)
+				rtn = item.toJava().toString();
+			proc.close();
+			if (rtn.equals("code:Package"))
+			{
+				String query2 = Query.getQuery("dynamicQuery");
+				query2 = " let $a:= " + path + " return data($a/@name) ";
+				proc = new QueryProcessor(query2, context);
+				iter = proc.iter();
+				rtn = ""; 
+				for(Item item; (item = iter.next()) != null;)
+					rtn = item.toJava().toString();
+
+				pkgName = pkgName + "." + rtn;
+				proc.close();
+			}
+			else
+				break;
+		}
+		return pkgName.substring(1);
 	}
 }
